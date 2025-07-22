@@ -6,34 +6,34 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "plugins": [
+      "expo-dev-client",
+      "expo-system-ui"
+    ],
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.toubre.chatdemo",
-      "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
-      }
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     },
     "android": {
+      "package": "com.toubre.chatdemo",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      },
-      "edgeToEdgeEnabled": true,
-      "package": "com.toubre.chatdemo"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.toubre.chatdemo",
+      "supportsTablet": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "extra": {
-      "eas": {
-        "projectId": "d635dd5f-013b-4f48-b49f-5b4e61281b88"
-      }
     }
   }
 }

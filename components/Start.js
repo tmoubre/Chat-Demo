@@ -11,12 +11,15 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
-export default function Start() {
+export default function Start({ navigation, route, db }) {
+  const { userID } = route.params;
   const [name, setName] = useState("");
-  const navigation = useNavigation();
-
   const handlePress = () => {
-    navigation.navigate("Chat", { userName: name.trim() });
+    navigation.navigate("Chat", {
+      userID,
+      name: name.trim(),
+      // backgroundColor: whatever you let the user pick
+    });
   };
 
   return (
