@@ -1,0 +1,75 @@
+# Node modules
+/node_modules/
+
+# Expo
+.expo/
+.web-build/        # expo web output
+dist/
+
+# Build output
+.android/
+.ios/
+build/             # generic build folder
+android/app/build/
+ios/Pods/
+
+# Local native dirs (if you ever remove and re‑prebuild)
+/android/
+/ios/
+
+# Expo dev‐client
+.expo-dev-client/
+
+# Metro and bundler caches
+.expo/
+.expo-shared/
+.packager/
+metro-cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Android Studio / Gradle
+.gradle/
+local.properties    # contains sdk.dir
+**/.idea/
+**/*.iml
+
+# Xcode
+*.xcworkspace
+*.xcuserstate
+DerivedData/
+build/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# EAS Build
+.eas/
+
+# TypeScript
+*.tsbuildinfo
+
+# JetBrains
+.idea/
+
+# Logs
+logs/
+*.log
+
+# Lock files (you may want to commit these depending on your workflow)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
