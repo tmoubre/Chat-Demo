@@ -6,6 +6,10 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+<<<<<<< Updated upstream
+=======
+    "jsEngine": "jsc",
+>>>>>>> Stashed changes
     "plugins": [
       "expo-dev-client",
       "expo-system-ui"
@@ -22,6 +26,10 @@
       "policy": "appVersion"
     },
     "android": {
+<<<<<<< Updated upstream
+=======
+      "jsEngine": "jsc",
+>>>>>>> Stashed changes
       "package": "com.toubre.chatdemo",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -37,3 +45,7 @@
     }
   }
 }
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
