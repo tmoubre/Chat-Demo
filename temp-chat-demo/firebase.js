@@ -1,11 +1,10 @@
 // firebase.js
 import { initializeApp } from "firebase/app";
+import { browserLocalPersistence, getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { initializeAuth, getReactNativePersistence } from "firebase/auth";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAbt26jbJFdk k3bQDy4iMLJDQl5‑KGqzdc",
+  apiKey: "AIzaSyAbt26jbJFdkk3bQDy4iM1JDQI5-KGqzdc",
   authDomain: "chat-app-5c220.firebaseapp.com",
   projectId: "chat-app-5c220",
   storageBucket: "chat-app-5c220.appspot.com",
@@ -15,9 +14,10 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-// Persist Auth state across restarts
-export const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage),
-});
-
 export const db = getFirestore(app);
+
+export const auth = getAuth(app);
+// Persist auth state in browser localStorage
+auth
+  .setPersistence(browserLocalPersistence)
+  .catch((err) => console.warn("Failed to set persistence:", err));
