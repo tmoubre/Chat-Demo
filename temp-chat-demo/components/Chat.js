@@ -1,71 +1,89 @@
-//Chat.js
-import React, { useState, useEffect, useCallback } from "react";
-import { View, Platform, KeyboardAvoidingView, StyleSheet } from "react-native";
-import { GiftedChat } from "react-native-gifted-chat";
+// Chat.js
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-  collection,
-  query,
-  orderBy,
-  onSnapshot,
   addDoc,
+  collection,
+  onSnapshot,
+  orderBy,
+  query,
   serverTimestamp,
 } from "firebase/firestore";
+import { useCallback, useEffect, useState } from "react";
+import { KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
+import { GiftedChat, InputToolbar } from "react-native-gifted-chat";
 
-export default function Chat({ db, route }) {
+export default function Chat({ db, route, isConnected }) {
   const { userID, name } = route.params;
   const [messages, setMessages] = useState([]);
 
   useEffect(() => {
-    // Subscribe in real time to the "messages" collection, newest first
-    const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const msgs = snapshot.docs.map((doc) => {
+    let unsubscribe;
+    const messagesRef = collection(db, "messages");
+    const q = query(messagesRef, orderBy("createdAt", "desc"));
+
+    if (isConnected) {
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        const messagesFirestore = snapshot.docs.map((doc) => {
           const data = doc.data();
           return {
             _id: doc.id,
             text: data.text,
-            createdAt: data.createdAt?.toDate() || new Date(),
+            createdAt: data.createdAt.toDate(),
             user: data.user,
           };
         });
-        setMessages(msgs);
-      },
-      (error) => {
-        console.error("Firestore onSnapshot error:", error);
-      }
-    );
+        setMessages(messagesFirestore);
+        AsyncStorage.setItem("messages", JSON.stringify(messagesFirestore));
+      });
+    } else {
+      AsyncStorage.getItem("messages").then((storedMessages) => {
+        if (storedMessages) {
+          setMessages(JSON.parse(storedMessages));
+        }
+      });
+    }
 
-    // Clean up listener on unmount
-    return unsubscribe;
-  }, [db]);
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [db, isConnected]);
 
-  // Send a new message by adding it to Firestore
   const onSend = useCallback(
     (newMessages = []) => {
-      const { text } = newMessages[0];
-      addDoc(collection(db, "messages"), {
-        text,
-        createdAt: serverTimestamp(),
-        user: {
-          _id: userID,
-          name,
-        },
-      }).catch((err) => console.error("Error sending message:", err));
+      const [message] = newMessages;
+
+      if (isConnected) {
+        addDoc(collection(db, "messages"), {
+          text: message.text,
+          createdAt: serverTimestamp(),
+          user: message.user,
+        });
+      }
+
+      setMessages((previousMessages) => {
+        const updatedMessages = GiftedChat.append(
+          previousMessages,
+          newMessages
+        );
+        AsyncStorage.setItem("messages", JSON.stringify(updatedMessages));
+        return updatedMessages;
+      });
     },
-    [db, userID, name]
+    [db, isConnected]
   );
 
   return (
     <View style={styles.container}>
       <GiftedChat
         messages={messages}
-        onSend={onSend}
+        onSend={(messages) => onSend(messages)}
         user={{ _id: userID, name }}
         placeholder="Type a message..."
-        alwaysShowSend
         scrollToBottom
+        alwaysShowSend={isConnected}
+        renderInputToolbar={(props) =>
+          isConnected ? <InputToolbar {...props} /> : null
+        }
       />
       {Platform.OS === "android" ? (
         <KeyboardAvoidingView behavior="height" />
