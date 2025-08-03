@@ -1,23 +1,13 @@
 // components/Welcome.js
-import React, { useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
-import { signInAnonymously, onAuthStateChanged } from "firebase/auth";
+import { signInAnonymously } from "firebase/auth";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function Welcome({ navigation, auth }) {
-  // if already signed in, go straight to Start
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        navigation.replace("Start", { userID: user.uid });
-      }
-    });
-    return unsub;
-  }, [auth, navigation]);
-
   const startChat = () => {
     signInAnonymously(auth)
       .then(({ user }) => {
         Alert.alert("Signed in anonymously");
+        // now navigate to Start
         navigation.replace("Start", { userID: user.uid });
       })
       .catch((error) => {

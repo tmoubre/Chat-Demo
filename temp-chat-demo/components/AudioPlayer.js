@@ -1,18 +1,26 @@
 // AudioPlayer.js
 import { Audio } from "expo-av";
 import { useEffect, useState } from "react";
-import { Text, TouchableOpacity } from "react-native";
+import { Platform, Text, TouchableOpacity, View } from "react-native";
 
 export default function AudioPlayer({ uri }) {
+  if (Platform.OS === "web") {
+    return (
+      <View style={{ padding: 8 }}>
+        <audio controls src={uri} style={{ width: 150 }} />
+      </View>
+    );
+  }
+
   const [sound, setSound] = useState();
   const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
-    return sound
-      ? () => {
-          sound.unloadAsync();
-        }
-      : undefined;
+    return () => {
+      if (sound) {
+        sound.unloadAsync();
+      }
+    };
   }, [sound]);
 
   const togglePlay = async () => {
@@ -22,7 +30,11 @@ export default function AudioPlayer({ uri }) {
       await s.playAsync();
       setPlaying(true);
       s.setOnPlaybackStatusUpdate((status) => {
-        if (status.didJustFinish) setPlaying(false);
+        if (status.didJustFinish) {
+          setPlaying(false);
+          s.unloadAsync();
+          setSound(null);
+        }
       });
     } else if (playing) {
       await sound.pauseAsync();

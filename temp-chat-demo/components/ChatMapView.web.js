@@ -1,4 +1,4 @@
-// No‑op on web to avoid native‑only bundling errors
+// ChatMapView.web.js
 export default function ChatMapView() {
   return null;
 }

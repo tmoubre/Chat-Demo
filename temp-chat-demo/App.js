@@ -11,7 +11,7 @@ import Start from "./components/Start";
 import Welcome from "./components/Welcome";
 import { auth, db } from "./firebase";
 
-// silence the AsyncStorage warning
+// Silence the AsyncStorage warning
 LogBox.ignoreLogs(["AsyncStorage has been extracted"]);
 
 const Stack = createNativeStackNavigator();
@@ -24,12 +24,12 @@ export default function App() {
     setIsConnected(netInfo.isConnected);
 
     if (netInfo.isConnected) {
-      enableNetwork(db).catch((error) =>
-        console.warn("Firestore enableNetwork error:", error)
+      enableNetwork(db).catch((err) =>
+        console.warn("Firestore enableNetwork error:", err)
       );
     } else {
-      disableNetwork(db).catch((error) =>
-        console.warn("Firestore disableNetwork error:", error)
+      disableNetwork(db).catch((err) =>
+        console.warn("Firestore disableNetwork error:", err)
       );
     }
   }, [netInfo.isConnected]);
@@ -48,7 +48,12 @@ export default function App() {
         </Stack.Screen>
         <Stack.Screen name="Chat">
           {(props) => (
-            <Chat auth={auth} db={db} isConnected={isConnected} {...props} />
+            <Chat
+              auth={auth}
+              db={db}
+              // isConnected is now handled inside Chat.js via NetInfo
+              {...props}
+            />
           )}
         </Stack.Screen>
       </Stack.Navigator>
