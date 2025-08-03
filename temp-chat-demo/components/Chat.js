@@ -1,6 +1,7 @@
 // Chat.js
 import { ActionSheetProvider } from "@expo/react-native-action-sheet";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import NetInfo from "@react-native-community/netinfo";
 import {
   addDoc,
   collection,
@@ -12,32 +13,49 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
 import { GiftedChat, InputToolbar } from "react-native-gifted-chat";
+
 import AudioPlayer from "./AudioPlayer";
-import MapView from "./ChatMapView";
+import MapView from "./ChatMapView.native";
 import CustomActions from "./CustomActions";
 
-export default function Chat({ db, route, isConnected }) {
+export default function Chat({ db, route }) {
   const { userID, name } = route.params;
   const [messages, setMessages] = useState([]);
+  const [isConnected, setIsConnected] = useState(true);
 
-  // Subscribe to Firestore and local storage
+  // 1) Subscribe to network status
   useEffect(() => {
-    let unsubscribe;
+    // initial fetch
+    NetInfo.fetch().then((state) => {
+      console.log("Initial connection:", state.isConnected);
+      setIsConnected(state.isConnected);
+    });
+    // listen for changes
+    const unsubscribeNet = NetInfo.addEventListener((state) => {
+      console.log("Connection changed:", state.isConnected);
+      setIsConnected(state.isConnected);
+    });
+    return () => unsubscribeNet();
+  }, []);
+
+  // 2) Load messages from Firestore or AsyncStorage
+  useEffect(() => {
+    let unsubscribeMessages;
     const messagesRef = collection(db, "messages");
     const q = query(messagesRef, orderBy("createdAt", "desc"));
 
     if (isConnected) {
-      unsubscribe = onSnapshot(q, (snapshot) => {
+      unsubscribeMessages = onSnapshot(q, (snapshot) => {
         const msgs = snapshot.docs.map((doc) => {
           const data = doc.data();
           return {
             _id: doc.id,
             text: data.text || "",
-            createdAt: data.createdAt.toDate(),
+            createdAt: data.createdAt ? data.createdAt.toDate() : new Date(),
             user: data.user,
             image: data.image || null,
             location: data.location || null,
-            audio: data.audio || null, // audio field
+            audio: data.audio || null,
           };
         });
         setMessages(msgs);
@@ -49,33 +67,33 @@ export default function Chat({ db, route, isConnected }) {
       });
     }
 
-    return () => unsubscribe && unsubscribe();
+    return () => unsubscribeMessages && unsubscribeMessages();
   }, [db, isConnected]);
 
-  // Send messages to Firestore and local state
+  // 3) Send handler (writes to Firestore + updates UI)
   const onSend = useCallback(
-    (newMessages) => {
-      const [message] = newMessages;
+    (newMessages = []) => {
+      const [msg] = newMessages;
       if (isConnected) {
         addDoc(collection(db, "messages"), {
-          text: message.text || "",
+          text: msg.text || "",
           createdAt: serverTimestamp(),
-          user: message.user,
-          image: message.image || null,
-          location: message.location || null,
-          audio: message.audio || null, // include audio
+          user: msg.user,
+          image: msg.image || null,
+          location: msg.location || null,
+          audio: msg.audio || null,
         });
       }
-      setMessages((prev) => {
-        const updated = GiftedChat.append(prev, newMessages);
-        AsyncStorage.setItem("messages", JSON.stringify(updated));
-        return updated;
-      });
+      setMessages((prev) => GiftedChat.append(prev, newMessages));
+      AsyncStorage.setItem(
+        "messages",
+        JSON.stringify(GiftedChat.append(messages, newMessages))
+      );
     },
-    [db, isConnected]
+    [db, isConnected, messages]
   );
 
-  // Render custom views: audio, location, then default
+  // 4) Render maps & audio bubbles
   const renderCustomView = (props) => {
     const { currentMessage } = props;
     if (currentMessage.audio) {
@@ -84,7 +102,12 @@ export default function Chat({ db, route, isConnected }) {
     if (currentMessage.location) {
       return (
         <MapView
-          style={{ width: 150, height: 100, borderRadius: 13, margin: 3 }}
+          style={{
+            width: 150,
+            height: 100,
+            borderRadius: 13,
+            margin: 3,
+          }}
           region={{
             latitude: currentMessage.location.latitude,
             longitude: currentMessage.location.longitude,
@@ -110,14 +133,18 @@ export default function Chat({ db, route, isConnected }) {
           renderInputToolbar={(props) =>
             isConnected ? <InputToolbar {...props} /> : null
           }
-          renderActions={(props) => <CustomActions {...props} />}
+          renderActions={(props) => (
+            <CustomActions
+              {...props}
+              onSend={onSend}
+              user={{ _id: userID, name }}
+            />
+          )}
           renderCustomView={renderCustomView}
         />
-        {Platform.OS === "android" ? (
-          <KeyboardAvoidingView behavior="height" />
-        ) : (
-          <KeyboardAvoidingView behavior="padding" />
-        )}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "android" ? "height" : "padding"}
+        />
       </View>
     </ActionSheetProvider>
   );

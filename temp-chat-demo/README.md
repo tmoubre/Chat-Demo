@@ -1,50 +1,196 @@
-# Welcome to your Expo app 👋
+# Chat App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A cross-platform, offline-first chat application built with Expo, React Native, GiftedChat, and Firebase.
+Supports real-time text, image, location, map, and audio messaging with offline persistence.
 
-## Get started
+---
 
-1. Install dependencies
+## 🚀 Features
+
+* **Real-time Text Chat** backed by Firebase Firestore
+* **Offline-First**: messages (text, images, location, audio) cache to AsyncStorage when offline; auto-sync when reconnected
+* **Image Upload**: pick from library or take photo with camera
+* **Location Sharing**: send your current geolocation
+* **Map View**: native `react-native-maps` on iOS/Android, placeholder on Web
+* **Audio Messages**: record & play back voice notes
+* **Connectivity Awareness**: online/offline detection via NetInfo
+
+---
+
+## 🛠 Tech Stack
+
+* **Expo (Managed Workflow)**
+* **React Native** & **GiftedChat** for UI
+* **Firebase** (Firestore & Storage)
+* **AsyncStorage** for local caching
+* **Expo-Image-Picker**, **Expo-Location**, **Expo-AV**
+* **@react-native-community/netinfo** for network status
+* **react-native-maps** for native map rendering
+
+---
+
+## 📦 Installation
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/your-username/chat-app.git
+   cd chat-app
+   ```
+
+2. **Install dependencies**
 
    ```bash
    npm install
    ```
 
-2. Start the app
+3. **Install Expo libraries**
 
    ```bash
-   npx expo start
+   expo install \
+     expo-image-picker \
+     expo-location \
+     expo-av \
+     @react-native-community/netinfo \
+     @react-native-async-storage/async-storage \
+     react-native-gifted-chat \
+     react-native-maps
    ```
 
-In the output, you'll find options to open the app in a
+4. **Install Firebase SDK**
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+   ```bash
+   npm install firebase
+   ```
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+## 🔧 Firebase Configuration
 
-When you're ready, run:
+1. In the [Firebase Console](https://console.firebase.google.com), create a project.
+
+2. Enable **Firestore** and **Storage**.
+
+3. Copy your web config (Project Settings → SDK Setup) and create `firebase.js` in the project root:
+
+   ```js
+   // firebase.js
+   import { initializeApp } from "firebase/app";
+   import { getFirestore } from "firebase/firestore";
+   import { getStorage } from "firebase/storage";
+
+   const firebaseConfig = {
+     apiKey: "...",
+     authDomain: "...",
+     projectId: "...",
+     storageBucket: "...",
+     messagingSenderId: "...",
+     appId: "..."
+   };
+
+   const app = initializeApp(firebaseConfig);
+   export const db = getFirestore(app);
+   export const storage = getStorage(app);
+   ```
+
+4. **Secure your keys**: add `firebase.js` to `.gitignore` or use environment variables.
+
+---
+
+## 🌐 CORS Setup for Web
+
+Browsers enforce CORS on Firebase Storage. To allow uploads from `http://localhost:8081`:
+
+1. Create `cors.json` at project root:
+
+   ```json
+   [
+     {
+       "origin": ["http://localhost:8081"],
+       "method": ["GET","POST","PUT","DELETE","HEAD","OPTIONS"],
+       "responseHeader": ["Content-Type","Authorization","X-Requested-With"],
+       "maxAgeSeconds": 3600
+     }
+   ]
+   ```
+
+2. Install the Google Cloud SDK (`gsutil`) and run:
+
+   ```bash
+   gsutil cors set cors.json gs://<YOUR_STORAGE_BUCKET>
+   ```
+
+---
+
+## 🚀 Running the App
+
+### Web
 
 ```bash
-npm run reset-project
+expo start --web
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+* Opens in your browser
+* Maps on Web display a placeholder
+* Test offline via DevTools → Application → Service Workers
 
-## Learn more
+### Mobile (iOS & Android)
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+expo start
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+* Press **a** to open on Android (requires USB debugging and `adb reverse tcp:8081 tcp:8081`)
+* Or scan the QR code in Expo DevTools with Expo Go on iOS/Android
 
-## Join the community
+> **Note**: All required native modules ship with **Expo Go**—no custom dev-client needed.
 
-Join our community of developers creating universal apps.
+---
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## 💡 Permissions & Edge Cases
+
+* **Media Library/Camera**: prompts on first use; alerts on denial
+* **Location**: prompts for foreground access; alerts on denial
+* **Microphone**: prompts for recording access; alerts on denial
+* **Offline Mode**: sending while offline caches locally and syncs later
+
+---
+
+## 📁 Project Structure
+
+```
+.
+├── App.js
+├── firebase.js
+├── components/
+│   ├── Welcome.js
+│   ├── Start.js
+│   ├── Chat.js
+│   ├── CustomActions.js
+│   ├── ChatMapView.native.js
+│   ├── ChatMapView.web.js
+│   └── AudioPlayer.js
+├── package.json
+├── cors.json
+└── README.md
+```
+
+---
+
+## 🐞 Troubleshooting
+
+* **NativeModule errors**: ensure you’re running in Expo Go (managed), not a dev-client.
+* **CORS failures**: verify your bucket’s CORS policy includes `OPTIONS` and your origin.
+* **Keyboard issues**: remove any external keyboard-controller package; use `KeyboardAvoidingView`.
+* **Cache problems**: clear Metro’s cache with `expo start --clear`.
+
+---
+
+## 📄 License
+
+MIT © Troy Oubre
+
+---
+
+Enjoy building and happy chatting! 🎉
+
